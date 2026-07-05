@@ -1,0 +1,67 @@
+import re
+from urllib.parse import urlparse
+
+class PhishingAnalyzer:
+    def __init__(self):
+        # Red flag keywords from DecodeLabs Project 3 Training Kit
+        self.suspicious_keywords = [
+            "urgent", "action required", "suspended", "verify your account", 
+            "immediate", "unauthorized login", "wire transfer", "invoice", "security alert"
+        ]
+        # Known URL shorteners often used to hide malicious domains
+        self.url_shorteners = ["bit.ly", "tinyurl.com", "t.co", "is.gd", "buff.ly"]
+
+    def analyze_text(self, email_text):
+        print("\n=== DECODELABS PHISHING ANALYSIS REPORT ===")
+        red_flags_found = 0
+        
+        # 1. Check for suspicious psychological triggers (Keywords)
+        print("\n[1] Checking Psychological Triggers & Keywords:")
+        found_keywords = [kw for kw in self.suspicious_keywords if kw in email_text.lower()]
+        if found_keywords:
+            print(f"   🚩 RED FLAG: Urgent/Fear tactics detected -> {found_keywords}")
+            red_flags_found += len(found_keywords)
+        else:
+            print("   ✅ No high-risk urgency keywords flagged.")
+
+    def analyze_url(self, url):
+        print("\n[2] Checking Technical Link Weaponization:")
+        red_flags = 0
+        try:
+            parsed_url = urlparse(url)
+            domain = parsed_url.netloc.lower()
+            
+            if not domain:
+                print("   ❌ Invalid URL provided.")
+                return
+
+            # Check for URL shorteners hiding the target
+            if any(shortener in domain for shortener in self.url_shorteners):
+                print(f"   🚩 RED FLAG: URL Shortener detected ({domain}). Attacker might be hiding an unsafe destination.")
+                red_flags += 1
+                
+            # Check for typosquatting/lookalike indicators (e.g., zeros instead of 'o')
+            if "0" in domain or "1" in domain or "-" in domain:
+                print(f"   🚩 WARNING: Lookalike domain characters found in '{domain}' (Potential Typosquatting).")
+                red_flags += 1
+
+            if red_flags == 0:
+                print(f"   ✅ Domain structure '{domain}' appears standard.")
+                
+            return red_flags
+        except Exception as e:
+            print(f"   ❌ Error parsing URL: {e}")
+            return 0
+
+# --- RUNNING THE SIMULATION ---
+if __name__ == "__main__":
+    analyzer = PhishingAnalyzer()
+    
+    # Sample Mock Phishing Scenario matching your training kit guidelines
+    mock_email = "URGENT: Your account has been suspended due to an unauthorized login. Verify your account now."
+    mock_url = "https://secure-g00gle-login.bit.ly/auth"
+    
+    # Execute triage
+    analyzer.analyze_text(mock_email)
+    analyzer.analyze_url(mock_url)
+    print("\n===========================================")
